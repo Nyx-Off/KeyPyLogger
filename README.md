@@ -1,278 +1,267 @@
-# 🔑 KeyPyLogger
+# 🔐 KeyPyLogger
 
-Un keylogger éducatif multi-plateforme (Windows/Linux) qui envoie les frappes clavier capturées vers un webhook Discord.
+**Un keylogger éducatif cross-platform avec intégration Discord pour l'apprentissage de la cybersécurité**
 
-## ⚠️ AVERTISSEMENT LÉGAL
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey.svg)]()
 
-**IMPORTANT : CET OUTIL EST DESTINÉ UNIQUEMENT À DES FINS ÉDUCATIVES ET DE TESTS AUTORISÉS**
+---
 
-- ✅ Utilisation autorisée : Recherche en cybersécurité, CTF, tests de pénétration autorisés, apprentissage
-- ❌ Utilisation interdite : Surveillance non autorisée, espionnage, violation de la vie privée
+## ⚠️ AVERTISSEMENT LÉGAL IMPORTANT
 
-**L'utilisation de keyloggers sans consentement explicite est ILLÉGALE dans la plupart des juridictions.**
+**LISEZ ATTENTIVEMENT AVANT D'UTILISER CET OUTIL**
 
-L'auteur n'est pas responsable des utilisations abusives de cet outil. Utilisez-le uniquement sur des systèmes que vous possédez ou pour lesquels vous avez une autorisation écrite explicite.
+Ce projet est strictement destiné à des **fins éducatives** et à des **tests de sécurité autorisés**.
+
+### ✅ Utilisations Autorisées
+- Cours et formations en cybersécurité
+- Laboratoires de test en environnement contrôlé
+- CTF (Capture The Flag) et compétitions de sécurité
+- Recherche en sécurité sur vos propres systèmes
+- Démonstrations pédagogiques
+
+### ❌ Utilisations Interdites
+- Surveillance non autorisée de tiers
+- Espionnage ou violation de la vie privée
+- Utilisation sans consentement explicite écrit
+- Toute activité illégale
+
+**L'utilisation de keyloggers sans autorisation est ILLÉGALE dans la plupart des juridictions et peut entraîner des poursuites pénales.**
+
+---
+
+## 🚀 Démarrage Rapide
+
+### 1. Installation
+
+```bash
+# Cloner le repository
+git clone https://github.com/Nyx-Off/KeyPyLogger.git
+cd KeyPyLogger
+
+# Installer les dépendances
+pip install -r requirements.txt
+```
+
+### 2. Configuration
+
+**Créer un Webhook Discord** :
+1. Discord → Serveur → Paramètres → Intégrations → Webhooks
+2. Créer un nouveau webhook
+3. Copier l'URL
+
+**Configurer le keylogger** :
+```bash
+# Windows
+notepad src/windows/keylogger_windows.py
+
+# Linux
+nano src/linux/keylogger_linux.py
+```
+
+Remplacer cette ligne (ligne 20) par votre webhook :
+```python
+WEBHOOK_URL = "YOUR_DISCORD_WEBHOOK_URL_HERE"
+```
+
+### 3. Exécution
+
+```bash
+# Windows
+python src/windows/keylogger_windows.py
+
+# Linux
+python3 src/linux/keylogger_linux.py
+```
+
+Pour plus de détails, voir [QUICK_START.md](QUICK_START.md)
+
+---
 
 ## 🎯 Fonctionnalités
 
-- ✅ **Multi-plateforme** : Fonctionne sur Windows et Linux
-- ✅ **Discord Integration** : Envoie les logs via webhook Discord
-- ✅ **Configuration facile** : Builder interactif pour configuration plug-and-play
-- ✅ **Envoi périodique** : Les logs sont envoyés à intervalles configurables
-- ✅ **Informations système** : Collecte des informations de base du système
-- ✅ **Gestion des touches spéciales** : Détecte Enter, Backspace, touches de fonction, etc.
-- ✅ **Build exécutable** : Possibilité de créer un exécutable standalone
+- ✅ **Multi-plateforme** : Windows et Linux
+- ✅ **Intégration Discord** : Envoi via webhooks
+- ✅ **Configuration simple** : Édition directe du code
+- ✅ **Compilation Windows** : Création d'exécutables standalone
+- ✅ **Capture complète** : Toutes les touches y compris spéciales
+- ✅ **Informations système** : Collecte automatique
+- ✅ **Envoi périodique** : Intervalle configurable
 
-## 📋 Prérequis
+---
 
-### Python
-- Python 3.7 ou supérieur
-- pip (gestionnaire de paquets Python)
-
-### Système
-- **Linux** : Peut nécessiter des permissions supplémentaires pour la capture clavier
-- **Windows** : Fonctionne sans privilèges particuliers (sauf pour certaines applications protégées)
-
-## 🚀 Installation
-
-### 1. Cloner le repository
-
-```bash
-git clone https://github.com/votre-username/KeyPyLogger.git
-cd KeyPyLogger
-```
-
-### 2. Installer les dépendances
-
-```bash
-pip install -r requirements.txt
-```
-
-## 🔧 Configuration et Utilisation
-
-### Méthode 1 : Builder Interactif (Recommandé)
-
-```bash
-python builder.py
-```
-
-Le builder vous guidera à travers :
-1. Configuration du webhook Discord
-2. Intervalle d'envoi des logs
-3. Choix du type de build (script Python ou exécutable)
-
-### Méthode 2 : Builder en ligne de commande
-
-```bash
-python builder.py "https://discord.com/api/webhooks/YOUR_WEBHOOK" 60 keylogger_output.py
-```
-
-Arguments :
-- `webhook_url` : URL du webhook Discord (requis)
-- `interval` : Intervalle d'envoi en secondes (défaut: 60)
-- `output_name` : Nom du fichier de sortie (défaut: keylogger_configured.py)
-
-### 3. Exécuter le keylogger configuré
-
-```bash
-# Script Python
-python build/keylogger_configured.py
-
-# Ou exécutable (si compilé)
-./build/dist/keylogger  # Linux
-build\dist\keylogger.exe  # Windows
-```
-
-## 🎨 Créer un Webhook Discord
-
-1. Ouvrir Discord et aller sur le serveur souhaité
-2. Paramètres du serveur → Intégrations → Webhooks
-3. Cliquer sur "Nouveau Webhook"
-4. Personnaliser le nom et le canal
-5. Copier l'URL du webhook
-6. Utiliser cette URL avec le builder
-
-## 📦 Structure du Projet
+## 📁 Structure du Projet
 
 ```
 KeyPyLogger/
-├── keylogger.py          # Code source principal du keylogger
-├── builder.py            # Outil de configuration et compilation
-├── requirements.txt      # Dépendances Python
-├── README.md            # Documentation
-├── LICENSE              # Licence
-└── build/               # Répertoire de sortie (créé après build)
-    ├── keylogger_configured.py
-    └── dist/
-        └── keylogger[.exe]
+├── README.md                       # Documentation principale
+├── QUICK_START.md                  # Guide de démarrage rapide
+├── requirements.txt                # Dépendances Python
+│
+├── src/
+│   ├── windows/
+│   │   └── keylogger_windows.py   # Keylogger Windows
+│   └── linux/
+│       └── keylogger_linux.py     # Keylogger Linux
+│
+├── tools/
+│   ├── compile_windows.py         # Compilateur Windows
+│   └── test_webhook.py            # Test de connexion
+│
+└── docs/
+    ├── INSTALLATION.md             # Guide d'installation
+    ├── USAGE.md                    # Guide d'utilisation
+    └── FAQ.md                      # Questions fréquentes
 ```
 
-## 🔍 Fonctionnement Technique
+---
 
-### Capture des frappes
-Le keylogger utilise la bibliothèque `pynput` pour capturer les événements clavier de manière cross-platform.
+## 💻 Utilisation
 
-### Envoi des données
-- Les frappes sont stockées dans un buffer en mémoire
-- Envoi automatique toutes les X secondes (configurable)
-- Envoi forcé si le buffer dépasse 1000 caractères
-- Format Discord Embed pour une présentation claire
+### Windows
 
-### Informations collectées
-- Frappes clavier (caractères et touches spéciales)
-- Nom d'hôte du système
-- Système d'exploitation et version
-- Architecture du processeur
-- Timestamp de chaque log
-
-## 🛡️ Détection et Sécurité
-
-### Détection par Antivirus
-
-**Note importante** : Ce keylogger utilise des techniques standards et peut être détecté par certains antivirus. Pour un projet éducatif légitime :
-
-1. **Ajoutez des exclusions** dans votre antivirus pour le dossier du projet
-2. **Désactivez temporairement** la protection en temps réel pendant les tests
-3. **Utilisez une VM** pour les tests en environnement isolé
-
-### Bonnes pratiques de sécurité
-
-Pour vos tests éducatifs :
-- Utilisez toujours une machine virtuelle dédiée
-- Ne testez jamais sur des systèmes de production
-- Gardez le webhook Discord privé
-- Supprimez les logs après les tests
-- Documentez vos autorisations de test
-
-## 🐧 Spécificités Linux
-
-### Permissions
-Sur Linux, vous pourriez avoir besoin de permissions supplémentaires :
-
+#### Script Python
 ```bash
-# Ajouter l'utilisateur au groupe input
-sudo usermod -a -G input $USER
-
-# Ou exécuter avec sudo (non recommandé pour la production)
-sudo python keylogger_configured.py
+python src/windows/keylogger_windows.py
 ```
 
-### Environnement graphique
-Nécessite un environnement X11 ou Wayland actif.
-
-## 🪟 Spécificités Windows
-
-### Exécution silencieuse
-Pour compiler en mode sans console (plus discret pour tests) :
-
-```bash
-pyinstaller --onefile --noconsole keylogger_configured.py
-```
-
-### Applications protégées
-Certaines applications (programmes administrateurs, UAC) peuvent bloquer la capture clavier.
-
-## 🧪 Tests et Validation
-
-### Test de base
-
-```bash
-# 1. Construire le keylogger
-python builder.py
-
-# 2. Exécuter dans un terminal
-python build/keylogger_configured.py
-
-# 3. Taper quelques caractères
-# 4. Vérifier le webhook Discord après l'intervalle configuré
-```
-
-### Test de l'exécutable
-
+#### Exécutable Compilé
 ```bash
 # Compiler
-python builder.py  # Choisir option 2
+python tools/compile_windows.py
 
 # Exécuter
-./build/dist/keylogger
+build/dist/Notepad.exe
 ```
 
-## 📝 Exemple de Sortie Discord
+### Linux
 
-```
-🔑 Keylog Report - DESKTOP-ABC123
-
-```
-Hello World[ENTER]
-Test 123[BACKSPACE][BACKSPACE][BACKSPACE]
-password123[ENTER]
-```
-
-System: Windows 10 x86_64
-Timestamp: 2025-11-15 14:30:45
-Buffer Size: 156 characters
-```
-
-## 🔧 Dépannage
-
-### "ModuleNotFoundError: No module named 'pynput'"
 ```bash
-pip install -r requirements.txt
+# Avec permissions
+python3 src/linux/keylogger_linux.py
+
+# Ou avec sudo si nécessaire
+sudo python3 src/linux/keylogger_linux.py
 ```
 
-### "Permission denied" sur Linux
+### Test de Connexion
+
 ```bash
-sudo usermod -a -G input $USER
-# Puis déconnexion/reconnexion
+python tools/test_webhook.py
 ```
 
-### Le webhook ne fonctionne pas
-- Vérifier que l'URL du webhook est correcte
-- Vérifier la connexion Internet
-- Vérifier que le webhook n'a pas été supprimé sur Discord
+---
 
-### L'antivirus supprime l'exécutable
-- Ajouter une exclusion pour le dossier KeyPyLogger
-- Utiliser un certificat de signature de code (pour production légitime)
-- Tester dans une VM isolée
+## ⚙️ Configuration
+
+Dans les fichiers source (`src/windows/keylogger_windows.py` ou `src/linux/keylogger_linux.py`) :
+
+```python
+WEBHOOK_URL = "https://discord.com/api/webhooks/..."  # Votre webhook
+SEND_INTERVAL = 60                                     # Intervalle en secondes
+MAX_BUFFER_SIZE = 1000                                 # Taille max du buffer
+```
+
+---
+
+## 🔨 Compilation (Windows)
+
+Pour créer un exécutable Windows :
+
+```bash
+python tools/compile_windows.py
+```
+
+Options :
+- **Option 1** : Console cachée (mode discret)
+- **Option 2** : Console visible (debug)
+
+L'exécutable sera dans `build/dist/`
+
+---
+
+## ❓ FAQ
+
+### Le keylogger ne capture rien ?
+- **Windows** : Vérifiez les permissions
+- **Linux** : Exécutez avec `sudo` ou ajoutez votre user au groupe `input`
+
+### Rien sur Discord ?
+- Vérifiez l'URL du webhook
+- Testez avec `tools/test_webhook.py`
+- Vérifiez votre connexion Internet
+
+### L'antivirus bloque ?
+- Normal pour les keyloggers
+- Ajoutez une exception dans votre antivirus
+- Testez dans une VM
+
+Plus de détails dans [docs/FAQ.md](docs/FAQ.md)
+
+---
 
 ## 🎓 Contexte Éducatif
 
-Ce projet est conçu pour :
-- Comprendre le fonctionnement des keyloggers
-- Apprendre les techniques de défense contre les keyloggers
-- Pratiquer la programmation Python multi-plateforme
-- Étudier l'interaction avec les API (Discord webhooks)
-- Développer des compétences en cybersécurité défensive
+Ce projet est conçu pour apprendre :
+- Le fonctionnement des keyloggers
+- Les techniques de défense
+- La programmation Python cross-platform
+- L'interaction avec les APIs
+- La cybersécurité défensive
 
-## 📚 Ressources Complémentaires
+**Recommandations** :
+- Testez toujours dans un environnement isolé (VM)
+- Documentez vos tests
+- Explorez les méthodes de détection
+- Respectez l'éthique et la légalité
 
-- [pynput Documentation](https://pynput.readthedocs.io/)
-- [Discord Webhook Guide](https://discord.com/developers/docs/resources/webhook)
-- [PyInstaller Documentation](https://pyinstaller.org/)
+---
 
 ## 🤝 Contribution
 
-Les contributions sont les bienvenues pour améliorer cet outil éducatif :
-- Rapports de bugs
-- Suggestions de fonctionnalités
-- Améliorations de la documentation
-- Corrections de code
+Les contributions sont les bienvenues !
+
+1. Fork le projet
+2. Créez une branche (`git checkout -b feature/AmazingFeature`)
+3. Commit (`git commit -m 'Add AmazingFeature'`)
+4. Push (`git push origin feature/AmazingFeature`)
+5. Ouvrez une Pull Request
+
+---
 
 ## 📄 Licence
 
-MIT License - Voir le fichier LICENSE pour plus de détails.
+Distribué sous licence MIT. Voir [LICENSE](LICENSE) pour plus d'informations.
+
+---
+
+## 📚 Documentation
+
+- [QUICK_START.md](QUICK_START.md) - Guide de démarrage rapide
+- [docs/INSTALLATION.md](docs/INSTALLATION.md) - Installation détaillée
+- [docs/USAGE.md](docs/USAGE.md) - Utilisation complète
+- [docs/FAQ.md](docs/FAQ.md) - Questions fréquentes
+
+---
 
 ## ⚖️ Responsabilité
 
-En utilisant cet outil, vous acceptez :
+**EN UTILISANT CET OUTIL, VOUS ACCEPTEZ :**
+
 - De l'utiliser uniquement à des fins éducatives et légales
 - D'obtenir un consentement explicite avant tout test
 - De ne pas porter atteinte à la vie privée d'autrui
 - D'assumer l'entière responsabilité de votre utilisation
 
-**L'auteur décline toute responsabilité en cas d'utilisation abusive ou illégale de cet outil.**
+**L'auteur décline toute responsabilité en cas d'utilisation abusive ou illégale.**
 
 ---
 
-**🎓 Projet éducatif - Utilisez de manière responsable**
+<div align="center">
+
+**⚠️ Projet Éducatif - Utilisez de Manière Responsable ⚠️**
+
+*Développé pour l'apprentissage de la cybersécurité* 🎓
+
+</div>

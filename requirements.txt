@@ -1,10 +1,10 @@
 # KeyPyLogger Dependencies
 
 # Core keylogging library - cross-platform keyboard monitoring
-pynput==1.7.6
+pynput>=1.7.6
 
 # HTTP requests for webhook communication
-requests==2.31.0
+requests>=2.31.0
 
-# Optional: For building standalone executables
-pyinstaller==6.3.0
+# Optional: For building standalone executables (use latest compatible version)
+pyinstaller>=6.0.0
