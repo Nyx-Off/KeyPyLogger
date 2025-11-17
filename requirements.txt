@@ -1,10 +1,30 @@
-# KeyPyLogger Dependencies
+# KeyPyLogger Dependencies v2.0
 
+# ===== CORE DEPENDENCIES =====
 # Core keylogging library - cross-platform keyboard monitoring
 pynput==1.7.6
 
 # HTTP requests for webhook communication
 requests==2.31.0
 
-# Optional: For building standalone executables
+# ===== ADVANCED FEATURES DEPENDENCIES =====
+# Clipboard monitoring
+pyperclip==1.8.2
+
+# Screenshot capture
+Pillow==10.1.0
+pyscreenshot==3.1  # Fallback for some Linux systems
+
+# Process monitoring and management
+psutil==5.9.6
+
+# ===== WINDOWS-SPECIFIC (Optional) =====
+# Windows COM for shortcuts (persistence)
+pywin32==306; sys_platform == 'win32'
+
+# ===== OPTIONAL DEPENDENCIES =====
+# For building standalone executables
 pyinstaller==6.3.0
+
+# For process name spoofing on Linux (self-protection)
+setproctitle==1.3.3; sys_platform != 'win32'
