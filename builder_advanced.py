@@ -90,6 +90,11 @@ class AdvancedKeyLoggerBuilder:
 
         # Write configured file
         output_name = config.get('output_name', 'keylogger_configured.py')
+
+        # Ensure .py extension
+        if not output_name.endswith('.py'):
+            output_name += '.py'
+
         output_path = self.output_dir / output_name
 
         try:
