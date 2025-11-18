@@ -86,6 +86,8 @@ cmd = [
     '--hidden-import', 'PIL',
     '--hidden-import', 'PIL.ImageGrab',
     '--hidden-import', 'psutil',
+    # CRITICAL: Include modules folder!
+    '--add-data', f'{str(output_dir / "modules")}{os.pathsep}modules',
     str(script_path)
 ]
 

