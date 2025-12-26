@@ -14,9 +14,12 @@ from pathlib import Path
 class AdvancedKeyLoggerBuilder:
     def __init__(self):
         self.base_dir = Path(__file__).parent
-        self.template_file = self.base_dir / "keylogger_advanced.py"
-        self.modules_dir = self.base_dir / "modules"
-        self.output_dir = self.base_dir / "build"
+        # Template is in src/windows/
+        self.template_file = self.base_dir.parent / "src" / "windows" / "keylogger_windows_advanced.py"
+        # Modules are at project root
+        self.modules_dir = self.base_dir.parent / "modules"
+        # Build output in project root
+        self.output_dir = self.base_dir.parent / "build"
 
     def validate_webhook(self, webhook_url):
         """Validate Discord webhook URL format"""
